@@ -1,0 +1,4 @@
+* 0.0.2
+    +  Need to fix the problem of feeding dict into the features run all, you can load a training dataset
+* 0.0.1
+    + First version of fler-core

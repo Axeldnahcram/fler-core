@@ -94,7 +94,6 @@ def presufixe (text):
     return presuf
 train['presuf']=presufixe(train['NoCaps'])
 gazloc =nocaps( nltk.corpus.gazetteers.words(fileids=['countries.txt','uscities.txt','usstates.txt','usstateabbrev.txt','mexstates.txt','caprovinces.txt']))
-
 gazper = nocaps(nltk.corpus.names.words(fileids=['male.txt','female.txt']))
 gazmisc = nocaps(nltk.corpus.gazetteers.words(fileids=['nationalities.txt']))
 L=[gazloc,gazper,gazmisc]
