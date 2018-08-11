@@ -1,0 +1,1 @@
+# FLER-core : french learning entity recognition
