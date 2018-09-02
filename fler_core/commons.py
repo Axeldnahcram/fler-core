@@ -14,7 +14,6 @@ import numpy as np
 import logzero
 #installed
 import nltk
-nltk.download('gazetteers')
 #custom
 from fler_utils.commons import get_asset_root, get_file_content
 import fler_core.constants as cst
