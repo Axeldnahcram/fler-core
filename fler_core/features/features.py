@@ -221,7 +221,7 @@ class Feature_eng(object):
         for key, value in freq.items():
             file_name = get_file_content(cfg, value)
             with open(file_name) as json_file:
-                data=json.load(json_file)
+                data = json.load(json_file)
             frequentname = data[key]
             LOGGER.info(frequentname)
             freq_entity = []
@@ -247,17 +247,104 @@ class Feature_eng(object):
                     if i in word:
                         g = 1
                 nube.append(g)
-        df["Number"]= nube
+        df["Number"] = nube
         return df
 
+    @staticmethod
+    def preuni_train(df: pd.DataFrame, liste_NP: list = ["ORG", "LOC", "PER", "MISC"]):
+        for at in liste_NP:
+            LOGGER.info(at)
+            uni = []
+            for i, row in enumerate(df.itertuples(index=True, name='Pandas'), 1):
+                if getattr(row, at) == 1:
+                    uni.append(df.iloc[i - 2, :][cst.LOWERCASE])
+            counter2 = collections.Counter(uni)
+
+            frequentuni = []
+            for i in uni:
+                if counter2[i] >= 6 and i not in frequentuni:
+                    frequentuni.append(i)
+            with open(f'preuni{at}.json', 'w') as outfile:
+                json.dump({f'preuni{at}':frequentuni}, outfile)
+            L = [0]
+            for i in range(1, len(df)):
+                if df.iloc[i - 1][cst.LOWERCASE] in frequentuni:
+                    L.append(1)
+                else:
+                    L.append(0)
+            df['PREUNI' + at] = L
+        return df
+
+    @staticmethod
+    def postuni_train(df: pd.DataFrame, liste_NP: list = ["ORG", "LOC", "MISC", "PER"]):
+        for at in liste_NP:
+            uni = []
+            for i, row in enumerate(df.itertuples(index=True, name='Pandas'), 1):
+                if getattr(row, at) == 1:
+                    uni.append(df.iloc[i - 2, :][cst.LOWERCASE])
+            counter2 = collections.Counter(uni)
+
+            frequentuni = []
+            for i in uni:
+                if counter2[i] >= 6 and i not in frequentuni:
+                    frequentuni.append(i)
+            with open(f'postuni{at}.json', 'w') as outfile:
+                json.dump({f'postuni{at}': frequentuni}, outfile)
+            L = []
+            for i in range(0, len(df)-1):
+                if df.iloc[i + 1][cst.LOWERCASE] in frequentuni:
+                    L.append(1)
+                else:
+                    L.append(0)
+            L.append(0)
+            df['POSTUNI' + at] = L
+        return df
+    @staticmethod
+    def preuni_factory(df: pd.DataFrame, directory):
+        preuni = {'preuniORG': f'{directory}/preuniORG',
+                'preuniLOC':   f'{directory}/preuniLOC', 'preuniPER': f'{directory}/preuniPER',
+                'preuniMISC':  f'{directory}/preuniMISC'}
+        cfg = get_asset_root()
+        for key, value in preuni.items():
+            file_name = get_file_content(cfg, value)
+            with open(file_name) as json_file:
+                data = json.load(json_file)
+            frequentname = data[key]
+            LOGGER.info(frequentname)
+            freq_entity = []
+            for row in df.itertuples(index=True, name='Pandas'):
+                if getattr(row, cst.LOWERCASE) in frequentname:
+                    freq_entity.append(1)
+                else:
+                    freq_entity.append(0)
+            df[key] = freq_entity
+        return df
+
+    @staticmethod
+    def postuni_factory(df: pd.DataFrame, directory):
+        postuni = {'postuniORG': f'{directory}/postuniORG',
+                   'postuniLOC':   f'{directory}/postuniLOC', 'postuniPER': f'{directory}/postuniPER',
+                   'postuniMISC':  f'{directory}/postuniMISC'}
+        cfg = get_asset_root()
+        for key, value in postuni.items():
+            file_name = get_file_content(cfg, value)
+            with open(file_name) as json_file:
+                data = json.load(json_file)
+            frequentname = data[key]
+            LOGGER.info(frequentname)
+            freq_entity = []
+            for row in df.itertuples(index=True, name='Pandas'):
+                if getattr(row, cst.LOWERCASE) in frequentname:
+                    freq_entity.append(1)
+                else:
+                    freq_entity.append(0)
+            df[key] = freq_entity
+        return df
 
 if __name__ == '__main__':
     cfg = get_asset_root()
-    train = get_file_content(cfg, "CoNLL2003/test")
+    train = get_file_content(cfg, "CoNLL2003/train")
     f = pd.read_csv(train)
-    g = Feature_eng()
-    g = Feature_eng.lowercase(f)
-    g = Feature_eng.frequency_factory(g, "freq_names_CONLL2003")
-    LOGGER.info(g.columns)
-    g = Feature_eng.number(g)
-    LOGGER.info(g.head())
+    f = Feature_eng.lowercase(f)
+    f = Feature_eng.postuni_train(f)
+    LOGGER.info(f.columns)
