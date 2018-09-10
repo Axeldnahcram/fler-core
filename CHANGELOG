@@ -1,3 +1,5 @@
+* 0.0.3
+    + Feature class almost over, we then will do the dataset training and try to add the same for french
 * 0.0.2
     +  Need to fix the problem of feeding dict into the features run all, you can load a training dataset
 * 0.0.1

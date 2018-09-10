@@ -17,6 +17,9 @@ import logzero
 from fler_utils.commons import get_asset_root, get_file_content, get_type_of_gazetteers
 import fler_core.constants as cst
 import fler_core.commons as com
+import collections
+import jsonpickle
+import json
 
 # Globals
 ###############################################################################
@@ -149,36 +152,112 @@ class Feature_eng(object):
         return df
 
     @staticmethod
-    def gazetteer(df: pd.DataFrame, language: str='ENG'):
+    def gazetteer(df: pd.DataFrame, language: str = 'ENG'):
         cfg = get_asset_root()
 
         list_gaz = get_type_of_gazetteers(cfg, 'en')
         for i in list_gaz:
+            g = [0 for i in df[cst.WORD]]
             list_files = get_file_content(cfg, 'gazetteer_en', gaztype=i)
             for j in list_files:
-                l = []
                 gaz = list(pd.read_csv(j)[cst.LOWERCASE])
-                for value, index in df[cst.LOWERCASE], df[cst.LOWERCASE].index:
-                    if value in gaz:
-                        l.append(1)
-                    else:
-                        l.append(0)
 
+                for index in range(0, len(df[cst.LOWERCASE])):
+                    if df[cst.LOWERCASE][index] in gaz:
+                        g[index] = 1
+            df[i] = g
+        return df
 
+    @staticmethod
+    def frequency_train(df: pd.DataFrame, liste_NP: list = ["ORG", "LOC", "PER", "MISC"]):
+        allname = []
+        json_final_file = {}
+        for row in df.itertuples(index=True, name='Pandas'):
+            if getattr(row, 'NEtag') != "O":
+                allname.append(getattr(row, cst.LOWERCASE))
+        counter = collections.Counter(allname)
+        frequentname = []
+        for i in allname:
+            if counter[i] >= 6 and i not in frequentname:
+                frequentname.append(i)
+        freq = []
+        with open(f'freqNAMES.json', 'w') as outfile:
+            json.dump(frequentname, outfile)
+        for row in df.itertuples(index=True, name='Pandas'):
+            if getattr(row, cst.LOWERCASE) in frequentname:
+                freq.append(1)
+            else:
+                freq.append(0)
+        df['FreqNAMES'] = freq
+        for type_NP in liste_NP:
+            allname = []
+            for row in df.itertuples(index=True, name='Pandas'):
+                if getattr(row, type_NP) != 0:
+                    allname.append(getattr(row, cst.LOWERCASE))
+            counter = collections.Counter(allname)
 
+            frequentname = []
+            for i in allname:
+                if counter[i] >= 6 and i not in frequentname:
+                    frequentname.append(i)
+            with open(f'freq{type_NP}.json', 'w') as outfile:
+                json.dump(frequentname, outfile)
 
+            freq = []
+            for row in df.itertuples(index=True, name='Pandas'):
+                if getattr(row, cst.LOWERCASE) in frequentname:
+                    freq.append(1)
+                else:
+                    freq.append(0)
+            df[f'Freq{type_NP}'] = freq
+        return df
 
+    @staticmethod
+    def frequency_factory(df: pd.DataFrame, directory):
+        freq = {'FreqNAMES': f'{directory}/freqNAMES', 'FreqORG': f'{directory}/freqORG',
+                'FreqLOC':   f'{directory}/freqLOC', 'FreqPER': f'{directory}/freqPER',
+                'FreqMISC':  f'{directory}/freqMISC'}
+        cfg = get_asset_root()
+        for key, value in freq.items():
+            file_name = get_file_content(cfg, value)
+            with open(file_name) as json_file:
+                data=json.load(json_file)
+            frequentname = data[key]
+            LOGGER.info(frequentname)
+            freq_entity = []
+            for row in df.itertuples(index=True, name='Pandas'):
+                if getattr(row, cst.LOWERCASE) in frequentname:
+                    freq_entity.append(1)
+                else:
+                    freq_entity.append(0)
+            df[key] = freq_entity
+        return df
 
-
-
+    @staticmethod
+    def number(df: pd.DataFrame):
+        Numb = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
+        nube = []
+        for row in df.itertuples(index=True, name='Pandas'):
+            word = getattr(row, cst.LOWERCASE)
+            if word == 0:
+                nube.append(0)
+            else:
+                g = 0
+                for i in Numb:
+                    if i in word:
+                        g = 1
+                nube.append(g)
+        df["Number"]= nube
+        return df
 
 
 if __name__ == '__main__':
-    # list_dir = "/Users/amarchand/Documents/Projets/fler/ext_files/csv/Gazetteer_ENG/"
-    # os.chdir(list_dir)
-    # list_dir2 = os.listdir(list_dir)
-    # dict_df = {}
-    # for i in list_dir2:
-    #     df = pd.DataFrame(pd.read_csv(i)["Word"])
-    #     feature = Feature_eng.lowercase(df)
-    #     df = feature.to_csv(f"/Users/amarchand/Documents/Projets/fler/ext_files/csv/Gazetteer_ENG/{i.replace('.txt','')}.csv")
+    cfg = get_asset_root()
+    train = get_file_content(cfg, "CoNLL2003/test")
+    f = pd.read_csv(train)
+    g = Feature_eng()
+    g = Feature_eng.lowercase(f)
+    g = Feature_eng.frequency_factory(g, "freq_names_CONLL2003")
+    LOGGER.info(g.columns)
+    g = Feature_eng.number(g)
+    LOGGER.info(g.head())
