@@ -265,7 +265,7 @@ class Feature_eng(object):
                 if counter2[i] >= 6 and i not in frequentuni:
                     frequentuni.append(i)
             with open(f'preuni{at}.json', 'w') as outfile:
-                json.dump({f'preuni{at}':frequentuni}, outfile)
+                json.dump({f'preuni{at}': frequentuni}, outfile)
             L = [0]
             for i in range(1, len(df)):
                 if df.iloc[i - 1][cst.LOWERCASE] in frequentuni:
@@ -291,7 +291,7 @@ class Feature_eng(object):
             with open(f'postuni{at}.json', 'w') as outfile:
                 json.dump({f'postuni{at}': frequentuni}, outfile)
             L = []
-            for i in range(0, len(df)-1):
+            for i in range(0, len(df) - 1):
                 if df.iloc[i + 1][cst.LOWERCASE] in frequentuni:
                     L.append(1)
                 else:
@@ -299,11 +299,12 @@ class Feature_eng(object):
             L.append(0)
             df['POSTUNI' + at] = L
         return df
+
     @staticmethod
     def preuni_factory(df: pd.DataFrame, directory):
-        preuni = {'preuniORG': f'{directory}/preuniORG',
-                'preuniLOC':   f'{directory}/preuniLOC', 'preuniPER': f'{directory}/preuniPER',
-                'preuniMISC':  f'{directory}/preuniMISC'}
+        preuni = {'preuniORG':  f'{directory}/preuniORG',
+                  'preuniLOC':  f'{directory}/preuniLOC', 'preuniPER': f'{directory}/preuniPER',
+                  'preuniMISC': f'{directory}/preuniMISC'}
         cfg = get_asset_root()
         for key, value in preuni.items():
             file_name = get_file_content(cfg, value)
@@ -311,40 +312,50 @@ class Feature_eng(object):
                 data = json.load(json_file)
             frequentname = data[key]
             LOGGER.info(frequentname)
-            freq_entity = []
-            for row in df.itertuples(index=True, name='Pandas'):
-                if getattr(row, cst.LOWERCASE) in frequentname:
-                    freq_entity.append(1)
+            L = [0]
+            for i in range(1, len(df)):
+                if df.iloc[i - 1][cst.LOWERCASE] in frequentname:
+                    L.append(1)
                 else:
-                    freq_entity.append(0)
-            df[key] = freq_entity
+                    L.append(0)
+            df[key] = L
         return df
 
     @staticmethod
     def postuni_factory(df: pd.DataFrame, directory):
-        postuni = {'postuniORG': f'{directory}/postuniORG',
-                   'postuniLOC':   f'{directory}/postuniLOC', 'postuniPER': f'{directory}/postuniPER',
-                   'postuniMISC':  f'{directory}/postuniMISC'}
+        postuni = {'postuniORG':  f'{directory}/postuniORG',
+                   'postuniLOC':  f'{directory}/postuniLOC', 'postuniPER': f'{directory}/postuniPER',
+                   'postuniMISC': f'{directory}/postuniMISC'}
         cfg = get_asset_root()
         for key, value in postuni.items():
+            LOGGER.info(value)
             file_name = get_file_content(cfg, value)
+            LOGGER.info(file_name)
             with open(file_name) as json_file:
                 data = json.load(json_file)
             frequentname = data[key]
             LOGGER.info(frequentname)
-            freq_entity = []
-            for row in df.itertuples(index=True, name='Pandas'):
-                if getattr(row, cst.LOWERCASE) in frequentname:
-                    freq_entity.append(1)
+            L = []
+            for i in range(0, len(df) - 1):
+                if df.iloc[i + 1][cst.LOWERCASE] in frequentname:
+                    L.append(1)
                 else:
-                    freq_entity.append(0)
-            df[key] = freq_entity
+                    L.append(0)
+            L.append(0)
+            df[key] = L
         return df
+
+    
+
+# feature_list
+features_no_directory = [Feature_eng.lowercase, Feature_eng.capitalize, Feature_eng.fullcap,
+            Feature_eng.length, Feature_eng.presufixe, Feature_eng.gazetteer, Feature_eng.number]
 
 if __name__ == '__main__':
     cfg = get_asset_root()
-    train = get_file_content(cfg, "CoNLL2003/train")
+    train = get_file_content(cfg, "CoNLL2003/test")
     f = pd.read_csv(train)
     f = Feature_eng.lowercase(f)
-    f = Feature_eng.postuni_train(f)
+    f = Feature_eng.preuni_factory(f, "pre_freq_CONLL2003")
     LOGGER.info(f.columns)
+    LOGGER.info(f.head())
