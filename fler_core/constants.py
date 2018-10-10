@@ -34,4 +34,4 @@ ORG = 'ORG'
 list_features = ['Cap', 'Full_Cap', 'Length', 'Pre_suffixe',
                  'GAZMISC', 'GAZPER', 'GAZLOC', 'Number', 'FreqNAMES', 'FreqORG',
                  'FreqLOC', 'FreqPER', 'FreqMISC', 'preuniORG', 'preuniLOC', 'preuniPER',
-                 'preuniMISC', 'postuniORG', 'postuniLOC', 'postuniPER', 'postuniMISC']
+                 'preuniMISC', 'postuniORG', 'postuniLOC', 'postuniPER', 'postuniMISC', "debut"]

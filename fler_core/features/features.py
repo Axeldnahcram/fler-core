@@ -345,11 +345,21 @@ class Feature_eng(object):
             df[key] = L
         return df
 
-    
+    @staticmethod
+    def debut(df: pd.DataFrame):
+        freq = [0]
+        for i in range(1, len(df)):
+            if df.iloc[i - 1][cst.LOWERCASE] in ['.','!', '?']:
+                freq.append(1)
+            else:
+                freq.append(0)
+        df['debut'] = freq
+        return df
+
 
 # feature_list
 features_no_directory = [Feature_eng.lowercase, Feature_eng.capitalize, Feature_eng.fullcap,
-            Feature_eng.length, Feature_eng.presufixe, Feature_eng.gazetteer, Feature_eng.number]
+                         Feature_eng.length, Feature_eng.presufixe, Feature_eng.gazetteer, Feature_eng.number, Feature_eng.debut]
 
 if __name__ == '__main__':
     cfg = get_asset_root()

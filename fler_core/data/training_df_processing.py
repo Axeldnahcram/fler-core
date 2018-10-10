@@ -18,6 +18,7 @@ import fler_core.constants as cst
 from fler_core.features.features import Feature_eng, features_no_directory
 from sklearn.externals import joblib
 from sklearn import svm
+from sklearn.ensemble import RandomForestClassifier
 import inspect
 # Globals
 ###############################################################################
@@ -151,7 +152,7 @@ class Training_database(object):
         return df
 
     @staticmethod
-    def try_trained_model(txt_to_test:str, model:str="svm_all_features"):
+    def try_trained_model(txt_to_test:str, model:str="svm_all_features", entity:list=['ORG','LOC','MISC', 'PER'], name_entity:list=['Organisations', 'Locations', 'Miscellaneaous', 'Persons']):
         df_to_do = pd.DataFrame()
         df_to_do['Word'] = txt_to_test.split()
         df_to_do = Training_database.do_feature_dataset(df_to_do)
@@ -160,7 +161,16 @@ class Training_database(object):
         model_clone = joblib.load(directory)
         df_test = df_to_do[cst.list_features]
         result = model_clone.predict(df_test)
-        return result
+        LOGGER.info(result)
+        dict_entity={}
+        for j in name_entity:
+            dict_entity[j]=[]
+        for i in range(0, len(result)):
+            for j in range (0,len(entity)):
+                if result[i] == j+1:
+                    dict_entity[name_entity[j]].append(df_to_do['Word'][i])
+
+        return dict_entity
 
 
 
@@ -168,8 +178,20 @@ class Training_database(object):
 
 
 if __name__ == "__main__":
-    cfg = get_asset_root()
-    LOGGER.info(Training_database.try_trained_model("Well, no wonder Marie did'nt know how to do something like that, like killing Jonnie"))
+    # cfg = get_asset_root()
+    # directory = get_file_content(cfg, "CoNLL2003/train")
+    # df = pd.read_csv(directory)
+    # df= df.dropna()
+    # df = df.reset_index()
+    # df = Training_database.do_feature_dataset(df)
+    # g = Training_database()
+    # rdm_forest = RandomForestClassifier(n_estimators=20, verbose=True)
+    # svm_multi = svm.SVC(kernel='rbf', C=1, verbose=True)
+    # h = g.train_with_function(rdm_forest, df, features=cst.list_features, name_to_export="rdm_forest_with_debut")
+    # h = g.train_with_function(svm_multi, df, features=cst.list_features, name_to_export="svm_multi_easy")
+    text = 'Nikky Halley resigned today from the UN as her former ambassador. She might run for governor of California'
+    g = Training_database.try_trained_model(text, "rdm_forest_with_debut")
+    LOGGER.info(g)
 
     
 
