@@ -17,7 +17,7 @@ from sklearn.externals import joblib
 # custom
 from fler_utils.commons import get_asset_root, get_file_content, get_type_of_gazetteers
 import fler_core.constants as cst
-from fler_core.features.features import Feature_eng
+from fler_core.features.features_eng import Feature_eng
 import fler_core.commons as com
 import collections
 import jsonpickle

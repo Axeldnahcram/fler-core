@@ -36,8 +36,8 @@ def get_presufix (language : str='ENG'):
     """
     if language == 'ENG':
         return cst.ENG_PREFIX, cst.ENG_SUFFIX
-    # if language == 'FR':
-    #     return cst.FR_PREFIX, cst.FR_SUFFIX
+    if language == 'FR':
+        return cst.FR_PREFIX, cst.FR_SUFFIX
 
 def no_caps(text):
     nocaps=[]
